@@ -18,6 +18,8 @@ Public Sub RefreshStageSheet(sheetName As String)
     Dim hdrRow   As Range:      Set hdrRow = subTbl.HeaderRowRange
     Dim visRange As Range
 
+    On Error GoTo ExitHandler
+
     Application.ScreenUpdating = False
 
     ' Clear existing body
@@ -37,6 +39,8 @@ Public Sub RefreshStageSheet(sheetName As String)
 
     ' Remove filter and reset
     mTbl.AutoFilter.ShowAllData
+
+ExitHandler:
     Application.CutCopyMode = False
     Application.ScreenUpdating = True
 End Sub
