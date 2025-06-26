@@ -1,7 +1,6 @@
 Option Explicit
 
 Private Sub Workbook_Open()
-    AddDesignAttachLinks
     Dim s
     For Each s In Array("Design", "Printing", "Production", "Shipping")
         RefreshStageSheet CStr(s)
@@ -32,6 +31,9 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
 
     If Target.CountLarge > 1 Then Exit Sub
 
+    On Error GoTo CleanExit
+    Application.EnableEvents = False
+
     SyncFlagToMaster Sh, Target
 
     Dim rowIdx As Long
@@ -42,20 +44,20 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
     Dim mWs As Worksheet
     On Error Resume Next
     Set mWs = ThisWorkbook.Worksheets("Master")
-    On Error GoTo 0
-    If mWs Is Nothing Then Exit Sub
+    On Error GoTo CleanExit
+    If mWs Is Nothing Then GoTo CleanExit
     Dim mLo As ListObject
     On Error Resume Next
     Set mLo = mWs.ListObjects(1)
-    On Error GoTo 0
-    If mLo Is Nothing Then Exit Sub
-    If mLo.ListRows.Count = 0 Then Exit Sub
+    On Error GoTo CleanExit
+    If mLo Is Nothing Then GoTo CleanExit
+    If mLo.ListRows.Count = 0 Then GoTo CleanExit
 
     Dim f As Range
     Set f = mLo.ListColumns(COL_WO).DataBodyRange.Find(wo, LookIn:=xlValues, LookAt:=xlWhole)
-    If f Is Nothing Then Exit Sub
+    If f Is Nothing Then GoTo CleanExit
     Dim masterRow As Range
-    Set masterRow = f.EntireRow
+    Set masterRow = mLo.DataBodyRange.Rows(f.Row - mLo.DataBodyRange.Row + 1)
 
     Dim colName As String
     colName = lo.HeaderRowRange.Cells(1, Target.Column - lo.Range.Column + 1).Value
@@ -90,4 +92,6 @@ Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
             AppendChangeLog wo, "Stage moved back to " & prevStage
         End If
     End If
+CleanExit:
+    Application.EnableEvents = True
 End Sub

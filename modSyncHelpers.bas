@@ -1,7 +1,15 @@
 Option Explicit
 
 Public Sub ClearOrderEntryRows(ByVal sh As Worksheet, ByVal rng As Range)
-    rng.Rows.ClearContents
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = sh.ListObjects(1)
+    On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    Dim i As Long
+    For i = rng.Rows.Count To 1 Step -1
+        lo.ListRows(rng.Rows(i).Row - lo.DataBodyRange.Row + 1).Delete
+    Next i
 End Sub
 
 Public Sub AppendChangeLog(ByVal wo As Variant, ByVal msg As String)
@@ -45,7 +53,7 @@ Public Sub RefreshStageSheet(ByVal sheetName As String)
     Set vis = mLo.DataBodyRange.SpecialCells(xlCellTypeVisible)
     On Error GoTo 0
     If Not vis Is Nothing Then
-        vis.Columns(1).Resize(, 9).Copy tLo.DataBodyRange.Cells(1, 1)
+        vis.Columns(1).Resize(, mLo.ListColumns.Count).Copy tLo.DataBodyRange.Cells(1, 1)
     End If
     If master.AutoFilterMode Then mLo.AutoFilter.ShowAllData
     If sheetName = "Design" Then AddDesignAttachLinks

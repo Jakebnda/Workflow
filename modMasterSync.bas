@@ -30,7 +30,8 @@ Public Sub SyncMasterFromRoleSheet(ByVal ws As Worksheet, ByVal rng As Range)
     If rng Is Nothing Then Exit Sub
     For Each rw In rng.Rows
         Dim wo As Variant
-        wo = rw.Cells(srcMap(COL_WO)).Value
+        wo = rw.Cells(1, srcMap(COL_WO)).Value
+        If Len(Trim(CStr(wo))) = 0 Then GoTo NextRw
         Dim f As Range
         If mLo.ListRows.Count > 0 Then
             Set f = mLo.ListColumns(COL_WO).DataBodyRange.Find(wo, LookIn:=xlValues, LookAt:=xlWhole)
@@ -41,7 +42,7 @@ Public Sub SyncMasterFromRoleSheet(ByVal ws As Worksheet, ByVal rng As Range)
         If f Is Nothing Then
             Set destRow = mLo.ListRows.Add.Range
         Else
-            Set destRow = f.EntireRow
+            Set destRow = mLo.DataBodyRange.Rows(f.Row - mLo.DataBodyRange.Row + 1)
         End If
         Dim key
         For Each key In srcMap.Keys
@@ -54,5 +55,6 @@ Public Sub SyncMasterFromRoleSheet(ByVal ws As Worksheet, ByVal rng As Range)
             End If
         Next key
         AppendChangeLog wo, "Sync from " & ws.Name
+NextRw:
     Next rw
 End Sub

@@ -31,11 +31,14 @@ Public Sub AddDesignAttachLinks()
     Dim r As Range, colName As Variant
     For Each r In lo.DataBodyRange.Rows
         Dim wo As Variant
-        wo = r.Cells(lo.ListColumns(COL_WO).Index).Value
+        wo = r.Cells(1, lo.ListColumns(COL_WO).Index).Value
+        If Len(Trim(CStr(wo))) = 0 Then GoTo NextRow
         Dim mRow As Range
         If mLo.ListRows.Count > 0 Then
             Set mRow = mLo.ListColumns(COL_WO).DataBodyRange.Find(wo, LookIn:=xlValues, LookAt:=xlWhole)
-            If Not mRow Is Nothing Then Set mRow = mRow.EntireRow
+            If Not mRow Is Nothing Then
+                Set mRow = mLo.DataBodyRange.Rows(mRow.Row - mLo.DataBodyRange.Row + 1)
+            End If
         End If
         For Each colName In cols
             Dim c As Range
@@ -44,7 +47,7 @@ Public Sub AddDesignAttachLinks()
             masterMissing = True
             If Not mRow Is Nothing Then
                 Dim mVal As String
-                mVal = GetHyperlinkAddress(mRow.Cells(mLo.ListColumns(colName).Index))
+                mVal = GetHyperlinkAddress(mRow.Cells(1, mLo.ListColumns(colName).Index))
                 If Len(mVal) > 0 Then masterMissing = False
             End If
             If masterMissing Then
@@ -53,5 +56,6 @@ Public Sub AddDesignAttachLinks()
                 End If
             End If
         Next colName
+NextRow:
     Next r
 End Sub

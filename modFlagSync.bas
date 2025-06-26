@@ -31,10 +31,11 @@ Public Sub SyncFlagToMaster(ByVal sh As Worksheet, ByVal Target As Range)
     rowIdx = Target.Row - lo.DataBodyRange.Row + 1
     Dim wo As Variant
     wo = lo.DataBodyRange.Cells(rowIdx, lo.ListColumns(COL_WO).Index).Value
+    If Len(Trim(CStr(wo))) = 0 Then Exit Sub
 
     Dim f As Range
     Set f = mLo.ListColumns(COL_WO).DataBodyRange.Find(wo, LookIn:=xlValues, LookAt:=xlWhole)
     If Not f Is Nothing Then
-        f.EntireRow.Cells(destIndex).Value = Target.Value
+        mLo.DataBodyRange.Rows(f.Row - mLo.DataBodyRange.Row + 1).Cells(1, destIndex).Value = Target.Value
     End If
 End Sub

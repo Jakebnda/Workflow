@@ -138,7 +138,7 @@ Private Sub UpdateRoleSheet(ByVal targetSheet As String)
     Set f = lo.ListColumns(COL_WO).DataBodyRange.Find(workOrder, LookIn:=xlValues, LookAt:=xlWhole)
     If Not f Is Nothing Then
         Dim row As Range
-        Set row = f.EntireRow
+        Set row = lo.DataBodyRange.Rows(f.Row - lo.DataBodyRange.Row + 1)
         UpdateCellHyperlink row.Cells(lo.ListColumns("ProofPath").Index), txtProof.Text
         UpdateCellHyperlink row.Cells(lo.ListColumns("EmailPath").Index), txtEmail.Text
         UpdateCellHyperlink row.Cells(lo.ListColumns("PrintPath").Index), txtPrint.Text

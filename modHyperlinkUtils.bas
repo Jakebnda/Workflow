@@ -1,7 +1,6 @@
 Option Explicit
 
 Public Sub UpdateCellHyperlink(ByVal c As Range, ByVal filePath As Variant)
-    If IsMissing(filePath) Then Exit Sub
     c.Hyperlinks.Delete
     If Len(CStr(filePath)) = 0 Then
         c.Value = ""
