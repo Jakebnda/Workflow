@@ -1,0 +1,96 @@
+'modMasterSync
+
+Option Explicit
+
+Public Sub SyncMasterFromRoleSheet(ws As Worksheet, rng As Range)
+    Dim mWs       As Worksheet: Set mWs    = Sheets("Master")
+    Dim logWs     As Worksheet: Set logWs  = Sheets("ChangeLog")
+    Dim tbl       As ListObject: Set tbl    = mWs.ListObjects("tblMaster")
+    Dim lastCol   As Long: lastCol         = tbl.ListColumns.Count
+    Dim r         As Range
+    Dim thisWO    As String
+    Dim masterRow As Range
+    Dim newRow    As ListRow
+    Dim colIdx    As Long
+    Dim newVal    As Variant, oldVal As Variant
+    Dim linkAddr  As String
+    Dim logNext   As Long
+
+    For Each r In rng.Rows
+        thisWO = CStr(ws.Cells(r.Row, tbl.ListColumns("WO").Index).Value)
+        If Len(thisWO) = 0 Then GoTo NextRow
+
+        If Not tbl.DataBodyRange Is Nothing Then
+            Set masterRow = tbl.ListColumns("WO").DataBodyRange.Find(thisWO, LookAt:=xlWhole, MatchCase:=False)
+        End If
+
+        If masterRow Is Nothing Then
+            If ws.Name = "Order Entry" Then
+                Set newRow = tbl.ListRows.Add
+                For colIdx = 1 To lastCol
+                    With ws.Cells(r.Row, tbl.ListColumns(colIdx).Index)
+                        Select Case tbl.ListColumns(colIdx).Name
+                          Case "ProofPath","EmailPath","PrintPath"
+                            If .Hyperlinks.Count > 0 Then linkAddr = .Hyperlinks(1).Address Else linkAddr = ""
+                            UpdateCellHyperlink newRow.Range.Cells(1, colIdx), linkAddr
+                          Case Else
+                            newRow.Range.Cells(1, colIdx).Value = .Value
+                        End Select
+                    End With
+                Next colIdx
+                newRow.Range.Cells(1, tbl.ListColumns("Stage").Index).Value = "Design"
+                logNext = logWs.Cells(logWs.Rows.Count, 1).End(xlUp).Row + 1
+                logWs.Cells(logNext, 1).Value = Now
+                logWs.Cells(logNext, 2).Value = Environ$("Username")
+                logWs.Cells(logNext, 3).Value = ws.Name
+                logWs.Cells(logNext, 4).Value = thisWO
+                logWs.Cells(logNext, 5).Value = "NEW RECORD"
+                logWs.Cells(logNext, 6).Value = ""
+                Set masterRow = newRow.Range.Cells(1, tbl.ListColumns("WO").Index)
+            Else
+                GoTo NextRow
+            End If
+        End If
+
+        For colIdx = 1 To lastCol
+            With ws.Cells(r.Row, tbl.ListColumns(colIdx).Index)
+                Select Case tbl.ListColumns(colIdx).Name
+                  Case "ProofPath","EmailPath","PrintPath"
+                    If .Hyperlinks.Count > 0 Then
+                        newVal = .Hyperlinks(1).Address
+                    Else
+                        newVal = ""
+                    End If
+                    With tbl.DataBodyRange.Cells(masterRow.Row - tbl.HeaderRowRange.Row + 1, colIdx)
+                        If .Hyperlinks.Count > 0 Then
+                            oldVal = .Hyperlinks(1).Address
+                        Else
+                            oldVal = ""
+                        End If
+                    End With
+                  Case Else
+                    newVal = .Value
+                    oldVal = masterRow.Offset(0, colIdx - 1).Value
+                End Select
+            End With
+
+            If CStr(newVal) <> CStr(oldVal) Then
+                If tbl.ListColumns(colIdx).Name Like "*Path" Then
+                    UpdateCellHyperlink masterRow.Offset(0, colIdx - 1), newVal
+                Else
+                    masterRow.Offset(0, colIdx - 1).Value = newVal
+                End If
+
+                logNext = logWs.Cells(logWs.Rows.Count, 1).End(xlUp).Row + 1
+                logWs.Cells(logNext, 1).Value = Now
+                logWs.Cells(logNext, 2).Value = Environ$("Username")
+                logWs.Cells(logNext, 3).Value = ws.Name
+                logWs.Cells(logNext, 4).Value = thisWO
+                logWs.Cells(logNext, 5).Value = tbl.ListColumns(colIdx).Name
+                logWs.Cells(logNext, 6).Value = oldVal & " ? " & newVal
+            End If
+        Next colIdx
+
+NextRow:
+    Next r
+End Sub
