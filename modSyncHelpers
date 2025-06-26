@@ -36,7 +36,9 @@ Public Sub RefreshStageSheet(sheetName As String)
     End If
 
     ' Remove filter and reset
-    mTbl.AutoFilter.ShowAllData
+    On Error Resume Next
+      mTbl.AutoFilter.ShowAllData
+    On Error GoTo 0
     Application.CutCopyMode = False
     Application.ScreenUpdating = True
 End Sub

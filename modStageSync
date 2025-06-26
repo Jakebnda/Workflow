@@ -31,7 +31,9 @@ Public Sub RefreshAllStages()
         End If
 
         ' Remove filter
-        mTbl.AutoFilter.ShowAllData
+        On Error Resume Next
+          mTbl.AutoFilter.ShowAllData
+        On Error GoTo 0
     Next ws
 
     Application.CutCopyMode = False
