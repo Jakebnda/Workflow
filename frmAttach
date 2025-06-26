@@ -107,15 +107,3 @@ Private Sub cmdOK_Click()
     Unload Me
 End Sub
 
-Private Function GetHyperlinkAddress(c As Range) As String
-    On Error Resume Next
-    GetHyperlinkAddress = c.Hyperlinks(1).Address
-    On Error GoTo 0
-End Function
-
-Public Sub UpdateCellHyperlink(c As Range, filePath As Variant)
-    ' Only update if a new path is supplied
-    If Len(Trim(CStr(filePath))) = 0 Then Exit Sub
-    On Error Resume Next: c.Hyperlinks.Delete: On Error GoTo 0
-    c.Parent.Hyperlinks.Add Anchor:=c, Address:=CStr(filePath), TextToDisplay:=Dir(CStr(filePath))
-End Sub
