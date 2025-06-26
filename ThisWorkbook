@@ -10,8 +10,12 @@ End Sub
 Private Sub Workbook_SheetFollowHyperlink(ByVal Sh As Object, ByVal Target As Hyperlink)
     If Sh.Name = "Design" Then
         If Target.TextToDisplay = "Attach" Then
+            Dim rowIdx As Long
+            rowIdx = Target.Range.Row
             Target.Delete
-            ShowAttachForm Target.Range.Row, "Design"
+            If rowIdx > 0 Then
+                ShowAttachForm rowIdx, "Design"
+            End If
         End If
     End If
 End Sub
