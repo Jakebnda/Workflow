@@ -100,7 +100,7 @@ Private sheetName As String
 Private workOrder As String
 
 Private Sub UserForm_Initialize()
-    Dim parts
+    Dim parts As Variant
     parts = Split(Me.Tag, "|")
     If UBound(parts) >= 1 Then
         sheetName = parts(0)
@@ -108,6 +108,8 @@ Private Sub UserForm_Initialize()
         Me.Caption = "Attach Files - " & sheetName & " " & workOrder
         LoadExistingPaths
     End If
+    cmdOK.Default = True
+    cmdCancel.Cancel = True
 End Sub
 
 Private Sub LoadExistingPaths()
@@ -136,22 +138,32 @@ Private Sub LoadExistingPaths()
 End Sub
 
 Private Sub cmdBrowseProof_Click()
-    Dim f As Variant
-    f = Application.GetOpenFilename("PDF Files (*.pdf), *.pdf")
-    If f <> False Then txtProof.Text = f
+    Dim f As String
+    f = BrowseForPDF()
+    If Len(f) > 0 Then txtProof.Text = f
 End Sub
 
 Private Sub cmdBrowseEmail_Click()
-    Dim f As Variant
-    f = Application.GetOpenFilename("PDF Files (*.pdf), *.pdf")
-    If f <> False Then txtEmail.Text = f
+    Dim f As String
+    f = BrowseForPDF()
+    If Len(f) > 0 Then txtEmail.Text = f
 End Sub
 
 Private Sub cmdBrowsePrint_Click()
+    Dim f As String
+    f = BrowseForPDF()
+    If Len(f) > 0 Then txtPrint.Text = f
+End Sub
+
+Private Function BrowseForPDF() As String
     Dim f As Variant
     f = Application.GetOpenFilename("PDF Files (*.pdf), *.pdf")
-    If f <> False Then txtPrint.Text = f
-End Sub
+    If f = False Then
+        BrowseForPDF = ""
+    Else
+        BrowseForPDF = CStr(f)
+    End If
+End Function
 
 Private Sub cmdOK_Click()
     If sheetName = "Design" Then
