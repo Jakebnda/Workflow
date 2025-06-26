@@ -1,0 +1,20 @@
+'modAttachBindings
+
+Option Explicit
+
+' — Design–sheet Attach button —
+Public Sub Attach_Design_Click()
+    ShowAttachForm 0, "Design"
+End Sub
+
+' — Order-Entry–sheet Attach button —
+Public Sub Attach_OrderEntry_Click()
+    Dim btnName  As String, topLeft As Range, rowIndex As Long
+
+    btnName = Application.Caller
+    On Error Resume Next: Set topLeft = ActiveSheet.Shapes(btnName).TopLeftCell: On Error GoTo 0
+    If topLeft Is Nothing Then Exit Sub
+    rowIndex = topLeft.Row
+
+    ShowAttachForm rowIndex, "Order Entry"
+End Sub
