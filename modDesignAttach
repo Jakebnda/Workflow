@@ -1,0 +1,34 @@
+'modDesignAttach
+
+Option Explicit
+
+''' Adds “Attach” hyperlinks to any blank ProofPath/EmailPath/PrintPath cells
+''' on the Design sheet’s table.
+Public Sub AddDesignAttachLinks()
+    Dim ws   As Worksheet:    Set ws   = ThisWorkbook.Sheets("Design")
+    Dim tbl  As ListObject:   Set tbl  = ws.ListObjects("tblDesign")
+    Dim pc   As Long:         pc     = tbl.ListColumns("ProofPath").Index
+    Dim ec   As Long:         ec     = tbl.ListColumns("EmailPath").Index
+    Dim rc   As Long:         rc     = tbl.ListColumns("PrintPath").Index
+    Dim lr   As ListRow
+
+    For Each lr In tbl.ListRows
+        With lr.Range
+            If Len(Trim(.Cells(1, pc).Value)) = 0 Then
+                On Error Resume Next
+                ws.Hyperlinks.Add Anchor:=.Cells(1, pc), Address:="", SubAddress:="", TextToDisplay:="Attach"
+                On Error GoTo 0
+            End If
+            If Len(Trim(.Cells(1, ec).Value)) = 0 Then
+                On Error Resume Next
+                ws.Hyperlinks.Add Anchor:=.Cells(1, ec), Address:="", SubAddress:="", TextToDisplay:="Attach"
+                On Error GoTo 0
+            End If
+            If Len(Trim(.Cells(1, rc).Value)) = 0 Then
+                On Error Resume Next
+                ws.Hyperlinks.Add Anchor:=.Cells(1, rc), Address:="", SubAddress:="", TextToDisplay:="Attach"
+                On Error GoTo 0
+            End If
+        End With
+    Next lr
+End Sub
