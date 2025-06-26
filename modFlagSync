@@ -1,0 +1,60 @@
+'modFlagSync
+
+Option Explicit
+
+''' Syncs any TRUE/FALSE checkbox change on a role sheet
+''' back to the matching <Sheet>_<Flag> column on the Master table.
+Public Sub SyncFlagToMaster(sh As Worksheet, ByVal Target As Range)
+    Dim wsMaster    As Worksheet: Set wsMaster = ThisWorkbook.Sheets("Master")
+    Dim tblMaster   As ListObject: Set tblMaster = wsMaster.ListObjects("tblMaster")
+    Dim fcell       As Range
+    Dim hdr         As String
+    Dim prefix      As String
+    Dim suffix      As String
+    Dim masterField As String
+    Dim wo          As String
+    Dim colIdx      As Long
+
+    ' Only on stage sheets
+    Select Case sh.Name
+      Case "Design":      prefix = "Design"
+      Case "Printing":    prefix = "Printing"
+      Case "Production":  prefix = "Prod"
+      Case "Shipping":    prefix = "Ship"
+      Case Else: Exit Sub
+    End Select
+
+    ' Must be a single-cell in data area
+    If Target.Cells.Count <> 1 Or sh.ListObjects.Count = 0 Then Exit Sub
+    hdr = Trim(sh.ListObjects(1).HeaderRowRange.Cells(1, Target.Column).Value)
+    If hdr = "" Then Exit Sub
+
+    ' Map header to suffix
+    Select Case prefix & "|" & hdr
+      Case "Design|Designed":     suffix = "Designed"
+      Case "Design|Redesigned":   suffix = "Redesigned"
+      Case "Printing|Printed":    suffix = "Printed"
+      Case "Printing|Redesign":   suffix = "Redesign"
+      Case "Printing|Reprinted":  suffix = "Reprinted"
+      Case "Prod|Complete":       suffix = "Complete"
+      Case "Prod|Reprint":        suffix = "Reprint"
+      Case "Prod|Rechecked":      suffix = "Rechecked"
+      Case "Ship|InstallReady":   suffix = "InstallReady"
+      Case "Ship|Shipped":        suffix = "Shipped"
+      Case "Ship|Recheck":        suffix = "Recheck"
+      Case Else
+        suffix = Replace(hdr, " ", "")
+    End Select
+
+    masterField = prefix & "_" & suffix
+
+    ' Find WO in Master
+    wo = Trim(sh.Cells(Target.Row, sh.ListObjects(1).ListColumns("WO").Index).Value)
+    If wo = "" Then Exit Sub
+    Set fcell = tblMaster.ListColumns("WO").DataBodyRange.Find(wo, LookAt:=xlWhole, MatchCase:=False)
+    If fcell Is Nothing Then Exit Sub
+
+    ' Write the flag
+    On Error Resume Next: colIdx = tblMaster.ListColumns(masterField).Index: On Error GoTo 0
+    If colIdx <> 0 Then fcell.Offset(0, colIdx - 1).Value = CBool(Target.Value)
+End Sub
