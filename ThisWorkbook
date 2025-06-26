@@ -1,1 +1,86 @@
+Option Explicit
 
+Private Sub Workbook_Open()
+    AddDesignAttachLinks
+    Dim s
+    For Each s In Array("Design", "Printing", "Production", "Shipping")
+        RefreshStageSheet CStr(s)
+    Next s
+End Sub
+
+Private Sub Workbook_SheetFollowHyperlink(ByVal Sh As Object, ByVal Target As Hyperlink)
+    If Sh.Name = "Design" Then
+        If Target.TextToDisplay = "Attach" Then
+            Target.Delete
+            ShowAttachForm Target.Range.Row, "Design"
+        End If
+    End If
+End Sub
+
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    Dim stageSheets As Variant
+    stageSheets = Array("Design", "Printing", "Production", "Shipping")
+    If IsError(Application.Match(Sh.Name, stageSheets, 0)) Then Exit Sub
+
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = Sh.ListObjects(1)
+    On Error GoTo 0
+    If lo Is Nothing Then Exit Sub
+    If lo.ListRows.Count = 0 Then Exit Sub
+    If Intersect(Target, lo.DataBodyRange) Is Nothing Then Exit Sub
+
+    If Target.CountLarge > 1 Then Exit Sub
+
+    SyncFlagToMaster Sh, Target
+
+    Dim rowIdx As Long
+    rowIdx = Target.Row - lo.DataBodyRange.Row + 1
+    Dim wo As Variant
+    wo = lo.DataBodyRange.Cells(rowIdx, lo.ListColumns(COL_WO).Index).Value
+
+    Dim mWs As Worksheet
+    Set mWs = ThisWorkbook.Worksheets("Master")
+    Dim mLo As ListObject
+    Set mLo = mWs.ListObjects(1)
+
+    Dim f As Range
+    Set f = mLo.ListColumns(COL_WO).DataBodyRange.Find(wo, LookIn:=xlValues, LookAt:=xlWhole)
+    If f Is Nothing Then Exit Sub
+    Dim masterRow As Range
+    Set masterRow = f.EntireRow
+
+    Dim colName As String
+    colName = lo.HeaderRowRange.Cells(1, Target.Column - lo.Range.Column + 1).Value
+
+    Dim stageCol As Long
+    stageCol = mLo.ListColumns("Stage").Index
+    Dim currentStage As String
+    currentStage = CStr(masterRow.Cells(stageCol).Value)
+
+    Dim nextStage As String, prevStage As String
+    Dim i As Long
+    For i = LBound(stageSheets) To UBound(stageSheets)
+        If stageSheets(i) = currentStage Then
+            If i < UBound(stageSheets) Then nextStage = stageSheets(i + 1)
+            If i > LBound(stageSheets) Then prevStage = stageSheets(i - 1)
+            Exit For
+        End If
+    Next i
+
+    Dim cellValue As Variant
+    cellValue = Target.Value
+    If VarType(cellValue) = vbBoolean And cellValue = True Then
+        If colName = Sh.Name & "_Complete" And nextStage <> "" Then
+            masterRow.Cells(stageCol).Value = nextStage
+            RefreshStageSheet Sh.Name
+            RefreshStageSheet nextStage
+            AppendChangeLog wo, "Stage advanced to " & nextStage
+        ElseIf (colName = Sh.Name & "_Redesign" Or colName = Sh.Name & "_Reprint") And prevStage <> "" Then
+            masterRow.Cells(stageCol).Value = prevStage
+            RefreshStageSheet Sh.Name
+            RefreshStageSheet prevStage
+            AppendChangeLog wo, "Stage moved back to " & prevStage
+        End If
+    End If
+End Sub
