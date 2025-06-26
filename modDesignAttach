@@ -5,30 +5,58 @@ Option Explicit
 ''' Adds “Attach” hyperlinks to any blank ProofPath/EmailPath/PrintPath cells
 ''' on the Design sheet’s table.
 Public Sub AddDesignAttachLinks()
+    ' Backwards compatibility wrapper
+    AddDesignAttachButtons
+End Sub
+
+''' Adds "Browse" or "View" buttons to ProofPath/EmailPath/PrintPath cells
+''' on the Design sheet.
+Public Sub AddDesignAttachButtons()
     Dim ws   As Worksheet:    Set ws   = ThisWorkbook.Sheets("Design")
     Dim tbl  As ListObject:   Set tbl  = ws.ListObjects("tblDesign")
     Dim pc   As Long:         pc     = tbl.ListColumns("ProofPath").Index
     Dim ec   As Long:         ec     = tbl.ListColumns("EmailPath").Index
     Dim rc   As Long:         rc     = tbl.ListColumns("PrintPath").Index
     Dim lr   As ListRow
+    Dim c    As Range
 
     For Each lr In tbl.ListRows
-        With lr.Range
-            If Len(Trim(.Cells(1, pc).Value)) = 0 Then
-                On Error Resume Next
-                ws.Hyperlinks.Add Anchor:=.Cells(1, pc), Address:="", SubAddress:="", TextToDisplay:="Attach"
-                On Error GoTo 0
-            End If
-            If Len(Trim(.Cells(1, ec).Value)) = 0 Then
-                On Error Resume Next
-                ws.Hyperlinks.Add Anchor:=.Cells(1, ec), Address:="", SubAddress:="", TextToDisplay:="Attach"
-                On Error GoTo 0
-            End If
-            If Len(Trim(.Cells(1, rc).Value)) = 0 Then
-                On Error Resume Next
-                ws.Hyperlinks.Add Anchor:=.Cells(1, rc), Address:="", SubAddress:="", TextToDisplay:="Attach"
-                On Error GoTo 0
-            End If
-        End With
+        For Each c In lr.Range.Columns(Array(pc, ec, rc)).Cells
+            UpdateAttachButton ws, c
+        Next c
     Next lr
+End Sub
+
+Private Sub UpdateAttachButton(ws As Worksheet, c As Range)
+    Dim btn     As Shape
+    Dim btnName As String
+    Dim fileAddr As String
+
+    btnName = "btn_" & c.Row & "_" & c.Column
+    On Error Resume Next
+        Set btn = ws.Shapes(btnName)
+    On Error GoTo 0
+
+    fileAddr = GetHyperlinkAddress(c)
+    If Len(fileAddr) = 0 Then fileAddr = Trim(CStr(c.Value))
+
+    If btn Is Nothing Then
+        Set btn = ws.Shapes.AddShape(msoShapeRectangle, c.Left, c.Top, c.Width, c.Height)
+        btn.Name = btnName
+        btn.TextFrame.HorizontalAlignment = xlHAlignCenter
+        btn.TextFrame.VerticalAlignment = xlVAlignCenter
+    End If
+
+    btn.Top = c.Top
+    btn.Left = c.Left
+    btn.Width = c.Width
+    btn.Height = c.Height
+
+    If Len(fileAddr) > 0 Then
+        btn.TextFrame.Characters.Text = "View"
+        btn.OnAction = "OpenAttachmentFromButton"
+    Else
+        btn.TextFrame.Characters.Text = "Browse"
+        btn.OnAction = "Attach_Design_Click"
+    End If
 End Sub

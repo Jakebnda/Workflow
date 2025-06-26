@@ -1,7 +1,10 @@
 Option Explicit
 
 Private Sub Workbook_Open()
-    ' (Optional startup code here)
+    ' Initialize attachment buttons on the Design sheet
+    On Error Resume Next
+    AddDesignAttachButtons
+    On Error GoTo 0
 End Sub
 
 Private Sub Workbook_SheetChange(ByVal sh As Object, ByVal Target As Range)
