@@ -1,1 +1,137 @@
+Option Explicit
 
+Private Sub Workbook_Open()
+    ' (Optional startup code here)
+End Sub
+
+Private Sub Workbook_SheetChange(ByVal sh As Object, ByVal Target As Range)
+    Dim tbl         As ListObject
+    Dim hdr         As String
+    Dim prefix      As String
+    Dim suffix      As String
+    Dim masterField As String
+    Dim wo          As String
+    Dim fcell       As Range
+    Dim mTbl        As ListObject
+    Dim colIndex    As Long
+
+    On Error GoTo ExitHandler
+    Application.EnableEvents = False
+
+    ' 1) Determine stage context
+    Select Case sh.Name
+        Case "Design":      prefix = "Design"
+        Case "Printing":    prefix = "Printing"
+        Case "Production":  prefix = "Prod"
+        Case "Shipping":    prefix = "Ship"
+        Case Else: GoTo ExitHandler
+    End Select
+
+    ' 2) Must be a table with data
+    If sh.ListObjects.Count = 0 Then GoTo ExitHandler
+    Set tbl = sh.ListObjects(1)
+    If tbl.DataBodyRange Is Nothing Then GoTo ExitHandler
+
+    ' 3) Only single‐cell changes
+    If Intersect(Target, tbl.DataBodyRange) Is Nothing Then GoTo ExitHandler
+    If Target.Cells.Count > 1 Then GoTo ExitHandler
+
+    ' 4) Read header & WO
+    hdr = Trim(sh.Cells(tbl.HeaderRowRange.Row, Target.Column).Value)
+    If hdr = "" Then GoTo ExitHandler
+    wo  = Trim(sh.Cells(Target.Row, tbl.ListColumns("WO").Index).Value)
+    If wo = "" Then GoTo ExitHandler
+
+    ' 5) Map to suffix for flag columns
+    Select Case prefix & "|" & hdr
+      Case "Design|Designed":     suffix = "Designed"
+      Case "Design|Redesigned":   suffix = "Redesigned"
+      Case "Printing|Printed":    suffix = "Printed"
+      Case "Printing|Redesign":   suffix = "Redesign"
+      Case "Printing|Reprinted":  suffix = "Reprinted"
+      Case "Prod|Complete":       suffix = "Complete"
+      Case "Prod|Reprint":        suffix = "Reprint"
+      Case "Prod|Rechecked":      suffix = "Rechecked"
+      Case "Ship|InstallReady":   suffix = "InstallReady"
+      Case "Ship|Shipped":        suffix = "Shipped"
+      Case "Ship|Recheck":        suffix = "Recheck"
+      Case Else
+        suffix = Replace(hdr, " ", "")
+    End Select
+    masterField = prefix & "_" & suffix
+
+    ' 6) Write the checkbox back to Master
+    With ThisWorkbook.Sheets("Master")
+        Set mTbl = .ListObjects("tblMaster")
+        Set fcell = mTbl.ListColumns("WO").DataBodyRange.Find( _
+                       What:=wo, LookAt:=xlWhole, MatchCase:=False)
+        If fcell Is Nothing Then GoTo ExitHandler
+
+        On Error Resume Next: colIndex = mTbl.ListColumns(masterField).Index: On Error GoTo 0
+        If colIndex <> 0 Then fcell.Offset(0, colIndex - 1).Value = CBool(Target.Value)
+
+        ' 7) Handle stage transitions
+        ' DESIGN → Printing
+        If prefix="Design" And (suffix="Designed" Or suffix="Redesigned") And CBool(Target.Value) Then
+            fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Printing"
+            RefreshStageSheet "Design": RefreshStageSheet "Printing"
+        End If
+        ' PRINTING → Production or back to Design
+        If prefix="Printing" Then
+            If suffix="Printed"    And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Production"
+                RefreshStageSheet "Printing": RefreshStageSheet "Production"
+            End If
+            If suffix="Redesign"   And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Design"
+                RefreshStageSheet "Printing": RefreshStageSheet "Design"
+            End If
+            If suffix="Reprinted"  And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Production"
+                RefreshStageSheet "Printing": RefreshStageSheet "Production"
+            End If
+        End If
+        ' PRODUCTION → Shipping or back to Printing
+        If prefix="Prod" Then
+            If suffix="Complete"   And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Shipping"
+                RefreshStageSheet "Production": RefreshStageSheet "Shipping"
+            End If
+            If suffix="Reprint"    And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Printing"
+                RefreshStageSheet "Production": RefreshStageSheet "Printing"
+            End If
+            If suffix="Rechecked"  And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Shipping"
+                RefreshStageSheet "Production": RefreshStageSheet "Shipping"
+            End If
+        End If
+        ' SHIPPING → remove or back to Production
+        If prefix="Ship" Then
+            If suffix="InstallReady" And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = ""
+                RefreshStageSheet "Shipping"
+            End If
+            If suffix="Shipped"     And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = ""
+                RefreshStageSheet "Shipping"
+            End If
+            If suffix="Recheck"     And CBool(Target.Value) Then
+                fcell.Offset(0, mTbl.ListColumns("Stage").Index - 1).Value = "Production"
+                RefreshStageSheet "Shipping": RefreshStageSheet "Production"
+            End If
+        End If
+    End With
+
+ExitHandler:
+    Application.EnableEvents = True
+End Sub
+
+Private Sub Workbook_SheetFollowHyperlink(ByVal sh As Object, ByVal Target As Hyperlink)
+    Dim rowIdx As Long
+    ' Only on Design sheet “Attach” links
+    If sh.Name<>"Design" Or Target.TextToDisplay<>"Attach" Then Exit Sub
+    rowIdx = Target.Range.Row
+    Application.EnableEvents=False: Target.Delete: Application.EnableEvents=True
+    ShowAttachForm rowIdx, sh.Name
+End Sub
