@@ -1,39 +1,8 @@
 Option Explicit
 
 Public Sub RefreshAllStages()
-    Dim mTbl     As ListObject:   Set mTbl     = Sheets("Master").ListObjects("tblMaster")
-    Dim ws       As Worksheet
-    Dim subTbl   As ListObject
-    Dim hdrRow   As Range
-    Dim visRange As Range
-
-    Application.ScreenUpdating = False
-
-    For Each ws In Sheets(Array("Order Entry", "Design", "Printing", "Production", "Shipping"))
-        Set subTbl = ws.ListObjects(1)
-        Set hdrRow = subTbl.HeaderRowRange
-
-        ' Clear existing rows
-        On Error Resume Next: subTbl.DataBodyRange.Delete: On Error GoTo 0
-
-        ' Filter Master by this stage
-        mTbl.Range.AutoFilter _
-            Field:=mTbl.ListColumns("Stage").Index, _
-            Criteria1:=ws.Name
-
-        ' Copy visible columns A:I into the stage sheet
-        On Error Resume Next
-          Set visRange = mTbl.DataBodyRange.SpecialCells(xlCellTypeVisible).Columns("A:I")
-        On Error GoTo 0
-
-        If Not visRange Is Nothing Then
-            visRange.Copy Destination:=hdrRow.Offset(1)
-        End If
-
-        ' Remove filter
-        mTbl.AutoFilter.ShowAllData
-    Next ws
-
-    Application.CutCopyMode = False
-    Application.ScreenUpdating = True
+    Dim stage As Variant
+    For Each stage In Array("Order Entry", "Design", "Printing", "Production", "Shipping")
+        RefreshStageSheet CStr(stage)
+    Next stage
 End Sub
