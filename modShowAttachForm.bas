@@ -19,11 +19,8 @@ Public Sub ShowAttachForm(Optional ByVal rowIndex As Variant, Optional ByVal she
     If lo.ListRows.Count = 0 Then Exit Sub
 
     Dim r As Long
-    If IsMissing(rowIndex) Or rowIndex = 0 Then
-        r = ActiveCell.Row
-    Else
-        r = CLng(rowIndex)
-    End If
+    If IsMissing(rowIndex) Or rowIndex <= 0 Then Exit Sub
+    r = CLng(rowIndex)
 
     Dim rowPos As Long
     rowPos = r - lo.DataBodyRange.Row + 1

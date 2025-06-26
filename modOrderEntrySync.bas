@@ -29,7 +29,9 @@ Public Sub UpdateOrderEntry()
     If mLo.ListRows.Count = 0 Then Exit Sub
     Dim c As Range
     For Each c In mLo.ListColumns("Stage").DataBodyRange
-        If Not dict.Exists(c.Value) Then dict.Add c.Value, 1
+        If Len(Trim(CStr(c.Value))) > 0 Then
+            If Not dict.Exists(c.Value) Then dict.Add c.Value, 1
+        End If
     Next c
     Dim stage
     For Each stage In dict.Keys
