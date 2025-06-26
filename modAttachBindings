@@ -18,3 +18,22 @@ Public Sub Attach_OrderEntry_Click()
 
     ShowAttachForm rowIndex, "Order Entry"
 End Sub
+
+' Opens the file linked in the cell beneath a View button.
+Public Sub OpenAttachmentFromButton()
+    Dim btnName As String
+    Dim c As Range
+    Dim filePath As String
+
+    btnName = Application.Caller
+    On Error Resume Next
+        Set c = ActiveSheet.Shapes(btnName).TopLeftCell
+    On Error GoTo 0
+    If c Is Nothing Then Exit Sub
+
+    filePath = GetHyperlinkAddress(c)
+    If Len(filePath) = 0 Then filePath = CStr(c.Value)
+    If Len(Trim(filePath)) = 0 Then Exit Sub
+
+    ThisWorkbook.FollowHyperlink Address:=filePath
+End Sub
