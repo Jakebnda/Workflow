@@ -1,0 +1,38 @@
+'modOrderEntrySync
+
+Option Explicit
+
+Public Sub UpdateOrderEntry()
+    Dim sh        As Worksheet: Set sh = ThisWorkbook.Sheets("Order Entry")
+    Dim tbl       As ListObject: Set tbl = sh.ListObjects("tblOrderEntry")
+    Dim rng       As Range
+    Dim stageDict As Object
+    Dim r         As Range
+    Dim stg       As String
+    Dim key       As Variant
+
+    On Error Resume Next: Set rng = tbl.DataBodyRange: On Error GoTo 0
+    If rng Is Nothing Then Exit Sub
+
+    Application.EnableEvents = False
+
+    ' 1) Sync to Master (adds new row or updates existing, preserving hyperlinks)
+    SyncMasterFromRoleSheet sh, rng
+
+    ' 2) Remember which stages remain
+    Set stageDict = CreateObject("Scripting.Dictionary")
+    For Each r In rng.Rows
+        stg = CStr(sh.Cells(r.Row, tbl.ListColumns("Stage").Index).Value)
+        If Len(Trim(stg)) > 0 Then stageDict(stg) = True
+    Next r
+
+    ' 3) Clear out the Order Entry rows
+    ClearOrderEntryRows sh, rng
+
+    ' 4) Refresh each downstream sheet based on remaining stages
+    For Each key In stageDict.Keys
+        RefreshStageSheet CStr(key)
+    Next key
+
+    Application.EnableEvents = True
+End Sub
