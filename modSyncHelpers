@@ -1,0 +1,42 @@
+'modSyncHelpers
+
+Option Explicit
+
+''' Clears the contents of the given rows in Order Entry after sending.
+Public Sub ClearOrderEntryRows(sh As Worksheet, rng As Range)
+    Dim r As Range
+    For Each r In rng.Rows
+        r.ClearContents
+    Next r
+End Sub
+
+''' Repopulates a stage sheet’s table from the Master table’s filtered view.
+Public Sub RefreshStageSheet(sheetName As String)
+    Dim mTbl     As ListObject: Set mTbl  = Sheets("Master").ListObjects("tblMaster")
+    Dim ws       As Worksheet:  Set ws    = Sheets(sheetName)
+    Dim subTbl   As ListObject: Set subTbl = ws.ListObjects(1)
+    Dim hdrRow   As Range:      Set hdrRow = subTbl.HeaderRowRange
+    Dim visRange As Range
+
+    Application.ScreenUpdating = False
+
+    ' Clear existing body
+    On Error Resume Next: subTbl.DataBodyRange.Delete: On Error GoTo 0
+
+    ' Filter Master by Stage
+    mTbl.Range.AutoFilter Field:=mTbl.ListColumns("Stage").Index, _
+                          Criteria1:=sheetName
+
+    ' Copy visible rows A:I into the stage table
+    On Error Resume Next
+      Set visRange = mTbl.DataBodyRange.SpecialCells(xlCellTypeVisible).Columns("A:I")
+    On Error GoTo 0
+    If Not visRange Is Nothing Then
+        visRange.Copy Destination:=hdrRow.Offset(1)
+    End If
+
+    ' Remove filter and reset
+    mTbl.AutoFilter.ShowAllData
+    Application.CutCopyMode = False
+    Application.ScreenUpdating = True
+End Sub
