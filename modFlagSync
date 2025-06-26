@@ -30,21 +30,7 @@ Public Sub SyncFlagToMaster(sh As Worksheet, ByVal Target As Range)
     If hdr = "" Then Exit Sub
 
     ' Map header to suffix
-    Select Case prefix & "|" & hdr
-      Case "Design|Designed":     suffix = "Designed"
-      Case "Design|Redesigned":   suffix = "Redesigned"
-      Case "Printing|Printed":    suffix = "Printed"
-      Case "Printing|Redesign":   suffix = "Redesign"
-      Case "Printing|Reprinted":  suffix = "Reprinted"
-      Case "Prod|Complete":       suffix = "Complete"
-      Case "Prod|Reprint":        suffix = "Reprint"
-      Case "Prod|Rechecked":      suffix = "Rechecked"
-      Case "Ship|InstallReady":   suffix = "InstallReady"
-      Case "Ship|Shipped":        suffix = "Shipped"
-      Case "Ship|Recheck":        suffix = "Recheck"
-      Case Else
-        suffix = Replace(hdr, " ", "")
-    End Select
+    suffix = GetFlagSuffix(prefix, hdr)
 
     masterField = prefix & "_" & suffix
 

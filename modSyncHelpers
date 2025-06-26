@@ -40,3 +40,22 @@ Public Sub RefreshStageSheet(sheetName As String)
     Application.CutCopyMode = False
     Application.ScreenUpdating = True
 End Sub
+
+''' Returns the standardized suffix for a flag column
+Public Function GetFlagSuffix(prefix As String, hdr As String) As String
+    Select Case prefix & "|" & hdr
+      Case "Design|Designed":     GetFlagSuffix = "Designed"
+      Case "Design|Redesigned":   GetFlagSuffix = "Redesigned"
+      Case "Printing|Printed":    GetFlagSuffix = "Printed"
+      Case "Printing|Redesign":   GetFlagSuffix = "Redesign"
+      Case "Printing|Reprinted":  GetFlagSuffix = "Reprinted"
+      Case "Prod|Complete":       GetFlagSuffix = "Complete"
+      Case "Prod|Reprint":        GetFlagSuffix = "Reprint"
+      Case "Prod|Rechecked":      GetFlagSuffix = "Rechecked"
+      Case "Ship|InstallReady":   GetFlagSuffix = "InstallReady"
+      Case "Ship|Shipped":        GetFlagSuffix = "Shipped"
+      Case "Ship|Recheck":        GetFlagSuffix = "Recheck"
+      Case Else
+        GetFlagSuffix = Replace(hdr, " ", "")
+    End Select
+End Function

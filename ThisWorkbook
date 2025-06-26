@@ -46,21 +46,7 @@ Private Sub Workbook_SheetChange(ByVal sh As Object, ByVal Target As Range)
     If wo = "" Then GoTo ExitHandler
 
     ' 5) Map to suffix for flag columns
-    Select Case prefix & "|" & hdr
-      Case "Design|Designed":     suffix = "Designed"
-      Case "Design|Redesigned":   suffix = "Redesigned"
-      Case "Printing|Printed":    suffix = "Printed"
-      Case "Printing|Redesign":   suffix = "Redesign"
-      Case "Printing|Reprinted":  suffix = "Reprinted"
-      Case "Prod|Complete":       suffix = "Complete"
-      Case "Prod|Reprint":        suffix = "Reprint"
-      Case "Prod|Rechecked":      suffix = "Rechecked"
-      Case "Ship|InstallReady":   suffix = "InstallReady"
-      Case "Ship|Shipped":        suffix = "Shipped"
-      Case "Ship|Recheck":        suffix = "Recheck"
-      Case Else
-        suffix = Replace(hdr, " ", "")
-    End Select
+    suffix = GetFlagSuffix(prefix, hdr)
     masterField = prefix & "_" & suffix
 
     ' 6) Write the checkbox back to Master
