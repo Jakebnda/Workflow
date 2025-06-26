@@ -7,6 +7,8 @@ Public Sub RefreshAllStages()
     Dim hdrRow   As Range
     Dim visRange As Range
 
+    On Error GoTo ExitHandler
+
     Application.ScreenUpdating = False
 
     For Each ws In Sheets(Array("Order Entry", "Design", "Printing", "Production", "Shipping"))
@@ -34,6 +36,7 @@ Public Sub RefreshAllStages()
         mTbl.AutoFilter.ShowAllData
     Next ws
 
+ExitHandler:
     Application.CutCopyMode = False
     Application.ScreenUpdating = True
 End Sub
