@@ -113,7 +113,7 @@ Private Function GetHyperlinkAddress(c As Range) As String
     On Error GoTo 0
 End Function
 
-Public Sub UpdateCellHyperlink(c As Range, filePath As Variant)
+Private Sub UpdateCellHyperlink(c As Range, filePath As Variant)
     ' Only update if a new path is supplied
     If Len(Trim(CStr(filePath))) = 0 Then Exit Sub
     On Error Resume Next: c.Hyperlinks.Delete: On Error GoTo 0
