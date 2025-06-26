@@ -14,8 +14,16 @@ Public Sub AddDesignAttachLinks()
     If lo Is Nothing Then Exit Sub
     If lo.ListRows.Count = 0 Then Exit Sub
 
+    Dim mWs As Worksheet
+    On Error Resume Next
+    Set mWs = ThisWorkbook.Worksheets("Master")
+    On Error GoTo 0
+    If mWs Is Nothing Then Exit Sub
     Dim mLo As ListObject
-    Set mLo = ThisWorkbook.Worksheets("Master").ListObjects(1)
+    On Error Resume Next
+    Set mLo = mWs.ListObjects(1)
+    On Error GoTo 0
+    If mLo Is Nothing Then Exit Sub
 
     Dim cols As Variant
     cols = Array("ProofPath", "EmailPath", "PrintPath")

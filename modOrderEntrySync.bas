@@ -16,8 +16,17 @@ Public Sub UpdateOrderEntry()
 
     Dim dict As Object
     Set dict = CreateObject("Scripting.Dictionary")
+    Dim mWs As Worksheet
+    On Error Resume Next
+    Set mWs = ThisWorkbook.Worksheets("Master")
+    On Error GoTo 0
+    If mWs Is Nothing Then Exit Sub
     Dim mLo As ListObject
-    Set mLo = ThisWorkbook.Worksheets("Master").ListObjects(1)
+    On Error Resume Next
+    Set mLo = mWs.ListObjects(1)
+    On Error GoTo 0
+    If mLo Is Nothing Then Exit Sub
+    If mLo.ListRows.Count = 0 Then Exit Sub
     Dim c As Range
     For Each c In mLo.ListColumns("Stage").DataBodyRange
         If Not dict.Exists(c.Value) Then dict.Add c.Value, 1

@@ -5,13 +5,16 @@ Public Sub ClearOrderEntryRows(ByVal sh As Worksheet, ByVal rng As Range)
 End Sub
 
 Public Sub AppendChangeLog(ByVal wo As Variant, ByVal msg As String)
-    With ThisWorkbook.Worksheets("ChangeLog")
-        Dim lr As Long
-        lr = .Cells(.Rows.Count, 1).End(xlUp).Row + 1
-        .Cells(lr, 1).Value = Now
-        .Cells(lr, 2).Value = wo
-        .Cells(lr, 3).Value = msg
-    End With
+    Dim logWs As Worksheet
+    On Error Resume Next
+    Set logWs = ThisWorkbook.Worksheets("ChangeLog")
+    On Error GoTo 0
+    If logWs Is Nothing Then Exit Sub
+    Dim lr As Long
+    lr = logWs.Cells(logWs.Rows.Count, 1).End(xlUp).Row + 1
+    logWs.Cells(lr, 1).Value = Now
+    logWs.Cells(lr, 2).Value = wo
+    logWs.Cells(lr, 3).Value = msg
 End Sub
 
 Public Sub RefreshStageSheet(ByVal sheetName As String)
