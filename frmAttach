@@ -1,0 +1,121 @@
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    Dim tagParts   As Variant
+    Dim workOrder  As String
+    Dim wsM        As Worksheet
+    Dim tblM       As ListObject
+    Dim fcellM     As Range
+
+    ' Parse Tag = "SheetName|WorkOrder"
+    tagParts = Split(CStr(Me.Tag), "|", 2)
+    If UBound(tagParts) <> 1 Then Exit Sub
+    workOrder = tagParts(1)
+
+    ' Load existing hyperlinks from Master
+    Set wsM  = ThisWorkbook.Sheets("Master")
+    Set tblM = wsM.ListObjects("tblMaster")
+    Set fcellM = tblM.ListColumns("WO").DataBodyRange.Find( _
+        What:=workOrder, LookAt:=xlWhole, MatchCase:=False, LookIn:=xlValues)
+    If Not fcellM Is Nothing Then
+        Me.txtProof.Text = GetHyperlinkAddress( _
+            wsM.Cells(fcellM.Row, tblM.ListColumns("ProofPath").Index))
+        Me.txtEmail.Text = GetHyperlinkAddress( _
+            wsM.Cells(fcellM.Row, tblM.ListColumns("EmailPath").Index))
+        Me.txtPrint.Text = GetHyperlinkAddress( _
+            wsM.Cells(fcellM.Row, tblM.ListColumns("PrintPath").Index))
+    End If
+End Sub
+
+Private Sub cmdBrowseProof_Click()
+    Dim f As Variant
+    f = Application.GetOpenFilename("PDF Files (*.pdf),*.pdf", , "Select Proof PDF")
+    If f <> False Then Me.txtProof.Text = f
+End Sub
+
+Private Sub cmdBrowseEmail_Click()
+    Dim f As Variant
+    f = Application.GetOpenFilename("PDF Files (*.pdf),*.pdf", , "Select Email PDF")
+    If f <> False Then Me.txtEmail.Text = f
+End Sub
+
+Private Sub cmdBrowsePrint_Click()
+    Dim f As Variant
+    f = Application.GetOpenFilename("PDF Files (*.pdf),*.pdf", , "Select Print File")
+    If f <> False Then Me.txtPrint.Text = f
+End Sub
+
+Private Sub cmdOK_Click()
+    Dim tagParts  As Variant
+    Dim sheetName As String
+    Dim workOrder As String
+    Dim wsD       As Worksheet
+    Dim tblD      As ListObject
+    Dim fcellD    As Range
+    Dim wsM       As Worksheet
+    Dim tblM      As ListObject
+    Dim fcellM    As Range
+    Dim fields    As Variant, paths As Variant
+    Dim i         As Long
+    Dim c         As Range
+    Dim p         As String
+
+    ' Parse Tag
+    tagParts  = Split(CStr(Me.Tag), "|", 2)
+    If UBound(tagParts) <> 1 Then Exit Sub
+    sheetName = tagParts(0)
+    workOrder = tagParts(1)
+
+    ' If launched from Design, update Design sheet cells
+    If sheetName = "Design" Then
+        Set wsD   = ThisWorkbook.Sheets("Design")
+        Set tblD  = wsD.ListObjects("tblDesign")
+        Set fcellD = tblD.ListColumns("WO").DataBodyRange.Find( _
+            What:=workOrder, LookAt:=xlWhole, MatchCase:=False, LookIn:=xlValues)
+        If Not fcellD Is Nothing Then
+            fields = Array("ProofPath", "EmailPath", "PrintPath")
+            paths  = Array(Me.txtProof.Text, Me.txtEmail.Text, Me.txtPrint.Text)
+            For i = LBound(fields) To UBound(fields)
+                p = CStr(paths(i))
+                Set c = wsD.Cells(fcellD.Row, tblD.ListColumns(fields(i)).Index)
+                If Len(Trim(p)) > 0 Then
+                    ' overwrite or create hyperlink
+                    UpdateCellHyperlink c, p
+                Else
+                    ' if blank and no hyperlink exists, re-add Attach link
+                    If c.Hyperlinks.Count = 0 Then
+                        On Error Resume Next
+                        c.Hyperlinks.Add Anchor:=c, Address:="", SubAddress:="", TextToDisplay:="Attach"
+                        On Error GoTo 0
+                    End If
+                End If
+            Next i
+        End If
+    End If
+
+    ' Always update Master table
+    Set wsM   = ThisWorkbook.Sheets("Master")
+    Set tblM  = wsM.ListObjects("tblMaster")
+    Set fcellM = tblM.ListColumns("WO").DataBodyRange.Find( _
+        What:=workOrder, LookAt:=xlWhole, MatchCase:=False, LookIn:=xlValues)
+    If Not fcellM Is Nothing Then
+        UpdateCellHyperlink wsM.Cells(fcellM.Row, tblM.ListColumns("ProofPath").Index), Me.txtProof.Text
+        UpdateCellHyperlink wsM.Cells(fcellM.Row, tblM.ListColumns("EmailPath").Index), Me.txtEmail.Text
+        UpdateCellHyperlink wsM.Cells(fcellM.Row, tblM.ListColumns("PrintPath").Index), Me.txtPrint.Text
+    End If
+
+    Unload Me
+End Sub
+
+Private Function GetHyperlinkAddress(c As Range) As String
+    On Error Resume Next
+    GetHyperlinkAddress = c.Hyperlinks(1).Address
+    On Error GoTo 0
+End Function
+
+Public Sub UpdateCellHyperlink(c As Range, filePath As Variant)
+    ' Only update if a new path is supplied
+    If Len(Trim(CStr(filePath))) = 0 Then Exit Sub
+    On Error Resume Next: c.Hyperlinks.Delete: On Error GoTo 0
+    c.Parent.Hyperlinks.Add Anchor:=c, Address:=CStr(filePath), TextToDisplay:=Dir(CStr(filePath))
+End Sub
