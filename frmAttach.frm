@@ -3,11 +3,20 @@ Begin VB.UserForm frmAttach
    Caption         =   "Attach Files"
    ClientHeight    =   3192
    ClientWidth     =   4680
+   Begin VB.Label lblProof
+      Caption         =   "Proof File:"
+      Height          =   252
+      Left            =   120
+      TabIndex        =   0
+      Top             =   60
+      Width           =   900
+   End
    Begin VB.TextBox txtProof
       Height          =   288
       Left            =   120
       Top             =   240
       Width           =   3000
+      TabIndex        =   1
    End
    Begin VB.CommandButton cmdBrowseProof
       Caption         =   "Browse"
@@ -15,12 +24,22 @@ Begin VB.UserForm frmAttach
       Left            =   3240
       Top             =   240
       Width           =   1200
+      TabIndex        =   2
+   End
+   Begin VB.Label lblEmail
+      Caption         =   "Email File:"
+      Height          =   252
+      Left            =   120
+      TabIndex        =   3
+      Top             =   540
+      Width           =   900
    End
    Begin VB.TextBox txtEmail
       Height          =   288
       Left            =   120
       Top             =   720
       Width           =   3000
+      TabIndex        =   4
    End
    Begin VB.CommandButton cmdBrowseEmail
       Caption         =   "Browse"
@@ -28,12 +47,22 @@ Begin VB.UserForm frmAttach
       Left            =   3240
       Top             =   720
       Width           =   1200
+      TabIndex        =   5
+   End
+   Begin VB.Label lblPrint
+      Caption         =   "Print File:"
+      Height          =   252
+      Left            =   120
+      TabIndex        =   6
+      Top             =   1020
+      Width           =   900
    End
    Begin VB.TextBox txtPrint
       Height          =   288
       Left            =   120
       Top             =   1200
       Width           =   3000
+      TabIndex        =   7
    End
    Begin VB.CommandButton cmdBrowsePrint
       Caption         =   "Browse"
@@ -41,6 +70,7 @@ Begin VB.UserForm frmAttach
       Left            =   3240
       Top             =   1200
       Width           =   1200
+      TabIndex        =   8
    End
    Begin VB.CommandButton cmdOK
       Caption         =   "OK"
@@ -48,6 +78,15 @@ Begin VB.UserForm frmAttach
       Left            =   1800
       Top             =   1800
       Width           =   1200
+      TabIndex        =   9
+   End
+   Begin VB.CommandButton cmdCancel
+      Caption         =   "Cancel"
+      Height          =   288
+      Left            =   1800
+      Top             =   2280
+      Width           =   1200
+      TabIndex        =   10
    End
 End
 Attribute VB_Name = "frmAttach"
@@ -66,6 +105,7 @@ Private Sub UserForm_Initialize()
     If UBound(parts) >= 1 Then
         sheetName = parts(0)
         workOrder = parts(1)
+        Me.Caption = "Attach Files - " & sheetName & " " & workOrder
         LoadExistingPaths
     End If
 End Sub
@@ -118,6 +158,10 @@ Private Sub cmdOK_Click()
         UpdateRoleSheet sheetName
     End If
     UpdateRoleSheet "Master"
+    Unload Me
+End Sub
+
+Private Sub cmdCancel_Click()
     Unload Me
 End Sub
 

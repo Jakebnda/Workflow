@@ -15,9 +15,9 @@ Public Sub SyncMasterFromRoleSheet(ByVal ws As Worksheet, ByVal rng As Range)
     On Error GoTo 0
     If mLo Is Nothing Then Exit Sub
 
-    Dim srcMap As Object, destMap As Object
-    Set srcMap = CreateObject("Scripting.Dictionary")
-    Set destMap = CreateObject("Scripting.Dictionary")
+    Dim srcMap As Scripting.Dictionary, destMap As Scripting.Dictionary
+    Set srcMap = New Scripting.Dictionary
+    Set destMap = New Scripting.Dictionary
     Dim i As Long
     For i = 1 To lo.ListColumns.Count
         srcMap(lo.ListColumns(i).Name) = i

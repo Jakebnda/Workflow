@@ -26,24 +26,26 @@ Public Sub AppendChangeLog(ByVal wo As Variant, ByVal msg As String)
 End Sub
 
 Public Sub RefreshStageSheet(ByVal sheetName As String)
+    On Error GoTo CleanExit
+    Application.EnableEvents = False
     Dim master As Worksheet
     Set master = ThisWorkbook.Worksheets("Master")
     Dim mLo As ListObject
     On Error Resume Next
     Set mLo = master.ListObjects(1)
-    On Error GoTo 0
-    If mLo Is Nothing Then Exit Sub
+    On Error GoTo CleanExit
+    If mLo Is Nothing Then GoTo CleanExit
 
     Dim target As Worksheet
     On Error Resume Next
     Set target = ThisWorkbook.Worksheets(sheetName)
-    On Error GoTo 0
-    If target Is Nothing Then Exit Sub
+    On Error GoTo CleanExit
+    If target Is Nothing Then GoTo CleanExit
     Dim tLo As ListObject
     On Error Resume Next
     Set tLo = target.ListObjects(1)
-    On Error GoTo 0
-    If tLo Is Nothing Then Exit Sub
+    On Error GoTo CleanExit
+    If tLo Is Nothing Then GoTo CleanExit
 
     If Not tLo.DataBodyRange Is Nothing Then tLo.DataBodyRange.ClearContents
     If mLo.ListRows.Count = 0 Then Exit Sub
@@ -57,4 +59,6 @@ Public Sub RefreshStageSheet(ByVal sheetName As String)
     End If
     If master.AutoFilterMode Then mLo.AutoFilter.ShowAllData
     If sheetName = "Design" Then AddDesignAttachLinks
+CleanExit:
+    Application.EnableEvents = True
 End Sub
