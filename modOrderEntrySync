@@ -11,8 +11,9 @@ Public Sub UpdateOrderEntry()
     Dim stg       As String
     Dim key       As Variant
 
+    On Error GoTo ExitHandler
     On Error Resume Next: Set rng = tbl.DataBodyRange: On Error GoTo 0
-    If rng Is Nothing Then Exit Sub
+    If rng Is Nothing Then GoTo ExitHandler
 
     Application.EnableEvents = False
 
@@ -34,5 +35,6 @@ Public Sub UpdateOrderEntry()
         RefreshStageSheet CStr(key)
     Next key
 
+ExitHandler:
     Application.EnableEvents = True
 End Sub
