@@ -1,0 +1,42 @@
+'modShowAttachForm
+
+Option Explicit
+
+Public Sub ShowAttachForm( _
+    Optional ByVal rowIndex As Long = 0, _
+    Optional ByVal sheetName As String = "")
+
+    Dim ws        As Worksheet
+    Dim tbl       As ListObject
+    Dim btnName   As String
+    Dim topLeft   As Range
+    Dim workOrder As String
+    Dim uf        As Object
+
+    ' Pick the correct sheet
+    If Len(sheetName)>0 Then
+        Set ws = ThisWorkbook.Sheets(sheetName)
+    Else
+        Set ws = ActiveSheet
+        sheetName = ws.Name
+    End If
+
+    ' Detect row if not passed
+    If rowIndex<=0 Then
+        btnName = Application.Caller
+        On Error Resume Next: Set topLeft = ws.Shapes(btnName).TopLeftCell: On Error GoTo 0
+        If topLeft Is Nothing Then Exit Sub
+        rowIndex = topLeft.Row
+    End If
+
+    ' Read the WO
+    If ws.ListObjects.Count=0 Then Exit Sub
+    Set tbl = ws.ListObjects(1)
+    workOrder = CStr(ws.Cells(rowIndex, tbl.ListColumns("WO").Index).Value)
+    If Len(Trim(workOrder))=0 Then Exit Sub
+
+    ' Show the form and pass Tag as "SheetName|WorkOrder"
+    Set uf = VBA.UserForms.Add("frmAttach")
+    uf.Tag = sheetName & "|" & workOrder
+    uf.Show
+End Sub
